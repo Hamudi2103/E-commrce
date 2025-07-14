@@ -1,8 +1,7 @@
 <?php
 session_start();
-require_once 'db_connection.php'; // Asegúrate de que esta ruta sea correcta
+require_once 'db_connection.php';
 
-// Redirigir si el usuario no está logueado
 if (!isset($_SESSION['usuario_id'])) {
     $_SESSION['mensaje'] = "<div class='error-message'>Debes iniciar sesión para gestionar tus métodos de pago.</div>";
     header('Location: login.php');
@@ -10,31 +9,27 @@ if (!isset($_SESSION['usuario_id'])) {
 }
 
 $usuario_id = $_SESSION['usuario_id'];
-$mensaje = $_SESSION['mensaje'] ?? ''; // Para mostrar mensajes de éxito/error
-unset($_SESSION['mensaje']); // Limpiar el mensaje después de mostrarlo
+$mensaje = $_SESSION['mensaje'] ?? '';
+unset($_SESSION['mensaje']);
 
-// --- Lógica para añadir un nuevo método de pago ---
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion']) && $_POST['accion'] === 'agregar_metodo') {
     $tipo_tarjeta = htmlspecialchars(trim($_POST['tipo_tarjeta'] ?? ''));
-    $numero_tarjeta = str_replace(' ', '', htmlspecialchars(trim($_POST['numero_tarjeta'] ?? ''))); // Limpiar espacios
+    $numero_tarjeta = str_replace(' ', '', htmlspecialchars(trim($_POST['numero_tarjeta'] ?? '')));
     $fecha_expiracion = htmlspecialchars(trim($_POST['fecha_expiracion'] ?? ''));
-    $cvv = htmlspecialchars(trim($_POST['cvv'] ?? '')); // Campo para el CVV
+    $cvv = htmlspecialchars(trim($_POST['cvv'] ?? ''));
     $es_predeterminado = isset($_POST['predeterminado']) ? 1 : 0;
     
-    // --- Procesar fecha de expiración ---
     $mes_expiracion = 0;
     $año_expiracion = 0;
     $fecha_valida = false;
 
     if (preg_match('/^(0[1-9]|1[0-2])\/?([0-9]{2})$/', $fecha_expiracion, $matches)) {
         $mes_expiracion = (int)$matches[1];
-        $año_expiracion = (int)('20' . $matches[2]); // Asume año en formato YY (ej. 25 -> 2025)
+        $año_expiracion = (int)('20' . $matches[2]);
         $fecha_valida = true;
 
-        // Validar que la fecha no esté en el pasado
         $fecha_actual = new DateTime();
         $fecha_exp = new DateTime("$año_expiracion-$mes_expiracion-01");
-        // Establecer el día al último del mes para una validación más precisa
         $fecha_exp->setDate($año_expiracion, $mes_expiracion, date('t', mktime(0, 0, 0, $mes_expiracion, 1, $año_expiracion)));
 
         if ($fecha_exp < $fecha_actual) {
@@ -42,36 +37,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion']) && $_POST['
         }
     }
 
-
-    // --- Validación de campos ---
     if (empty($tipo_tarjeta) || empty($numero_tarjeta) || empty($fecha_expiracion) || empty($cvv)) {
         $mensaje = "<div class='error-message'>Todos los campos obligatorios deben ser completados.</div>";
-    } elseif (!preg_match('/^[0-9]{13,19}$/', $numero_tarjeta)) { // Validación básica de número de tarjeta (solo dígitos, longitud)
+    } elseif (!preg_match('/^[0-9]{13,19}$/', $numero_tarjeta)) {
         $mensaje = "<div class='error-message'>El número de tarjeta no es válido.</div>";
-    } elseif (!preg_match('/^[0-9]{3,4}$/', $cvv)) { // Validación CVV (3 o 4 dígitos)
+    } elseif (!preg_match('/^[0-9]{3,4}$/', $cvv)) {
         $mensaje = "<div class='error-message'>El código de seguridad (CVV) no es válido (3 o 4 dígitos).</div>";
     } elseif (!$fecha_valida) {
         $mensaje = "<div class='error-message'>La fecha de expiración no es válida o está en el pasado (formato MM/AA).</div>";
     } else {
-        // Obtener los últimos 4 dígitos para almacenar
         $ultimos_cuatro = substr($numero_tarjeta, -4);
         
-        // Simulación de token: en una app real, esto vendría de la pasarela de pago.
-        // NUNCA PONGAS DATOS SENSIBLES DE TARJETAS AQUÍ (número completo, CVV).
-        $token_pago = 'simulated_token_' . uniqid(); // Generar un token único simulado
+        $token_pago = 'simulated_token_' . uniqid();
 
         try {
             $pdo->beginTransaction();
 
-            // Si se marca como predeterminado, desmarcar los otros métodos predeterminados del usuario
             if ($es_predeterminado) {
                 $stmt = $pdo->prepare("UPDATE metodos_pago SET predeterminado = FALSE WHERE usuario_id = ?");
                 $stmt->execute([$usuario_id]);
             }
 
-            // Insertar el nuevo método de pago
-            // NOTA DE SEGURIDAD: 'numero_tarjeta' y 'cvv' NO SE ALMACENAN en la DB.
-            // Se almacena 'ultimos_cuatro_digitos' y 'token_pago'.
             $stmt = $pdo->prepare("INSERT INTO metodos_pago (usuario_id, tipo_tarjeta, ultimos_cuatro_digitos, mes_expiracion, año_expiracion, token_pago, predeterminado) VALUES (?, ?, ?, ?, ?, ?, ?)");
             $stmt->execute([$usuario_id, $tipo_tarjeta, $ultimos_cuatro, $mes_expiracion, $año_expiracion, $token_pago, $es_predeterminado]);
 
@@ -88,7 +74,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion']) && $_POST['
     }
 }
 
-// --- Lógica para eliminar un método de pago ---
 if (isset($_GET['accion']) && $_GET['accion'] === 'eliminar' && isset($_GET['id'])) {
     $metodo_id = (int)$_GET['id'];
     try {
@@ -106,17 +91,14 @@ if (isset($_GET['accion']) && $_GET['accion'] === 'eliminar' && isset($_GET['id'
     exit();
 }
 
-// --- Lógica para establecer un método como predeterminado ---
 if (isset($_GET['accion']) && $_GET['accion'] === 'establecer_predeterminado' && isset($_GET['id'])) {
     $metodo_id_a_establecer = (int)$_GET['id'];
     try {
         $pdo->beginTransaction();
 
-        // Desmarcar todos los métodos como predeterminados para este usuario
         $stmt_reset = $pdo->prepare("UPDATE metodos_pago SET predeterminado = FALSE WHERE usuario_id = ?");
         $stmt_reset->execute([$usuario_id]);
 
-        // Marcar el método seleccionado como predeterminado
         $stmt_set = $pdo->prepare("UPDATE metodos_pago SET predeterminado = TRUE WHERE id = ? AND usuario_id = ?");
         if ($stmt_set->execute([$metodo_id_a_establecer, $usuario_id])) {
             $pdo->commit();
@@ -134,7 +116,6 @@ if (isset($_GET['accion']) && $_GET['accion'] === 'establecer_predeterminado' &&
     exit();
 }
 
-// --- Lógica para realizar un pago (simulado) y vaciar el carrito ---
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion']) && $_POST['accion'] === 'realizar_pago') {
     $metodo_pago_seleccionado_id = (int)($_POST['metodo_pago_seleccionado'] ?? 0);
 
@@ -142,8 +123,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion']) && $_POST['
         try {
             $pdo->beginTransaction();
 
-            // 1. Obtener los ítems del carrito antes de vaciarlo
-            // Asegúrate de que la tabla 'carrito' tiene 'producto_id', 'cantidad', 'precio_unitario', 'talla_seleccionada'
             $stmt_items_carrito = $pdo->prepare("
                 SELECT 
                     ci.producto_id, 
@@ -161,19 +140,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion']) && $_POST['
             if (empty($items_carrito)) {
                 $_SESSION['mensaje'] = "<div class='error-message'>Tu carrito está vacío. No se puede procesar el pago.</div>";
                 $pdo->rollBack();
-                header('Location: carrito.php'); // Redirigir al carrito si está vacío
+                header('Location: carrito.php');
                 exit();
             }
 
-            // Calcular el total de la orden
             $total_orden = 0;
             foreach ($items_carrito as $item) {
                 $total_orden += ($item['cantidad'] * $item['precio_unitario']);
             }
 
-            // 2. Insertar la orden principal en la tabla `ordenes`
-            // Aquí podrías obtener la dirección de envío del perfil del usuario si la tuvieras
-            // Por simplicidad, usaremos un valor por defecto o un campo extra si lo agregas al perfil
             $direccion_envio_simulada = "Dirección de envío del usuario (ej. desde el perfil)"; 
 
             $stmt_insert_orden = $pdo->prepare("
@@ -181,10 +156,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion']) && $_POST['
                 VALUES (?, ?, ?, 'Completado', ?)
             ");
             $stmt_insert_orden->execute([$usuario_id, $metodo_pago_seleccionado_id, $total_orden, $direccion_envio_simulada]);
-            $orden_id = $pdo->lastInsertId(); // Obtener el ID de la orden recién insertada
+            $orden_id = $pdo->lastInsertId();
 
-            // 3. Insertar los detalles de la orden en la tabla `detalles_orden`
-            // Asegúrate de que las columnas coincidan con las de tu tabla `detalles_orden`
             $stmt_insert_detalle = $pdo->prepare("
                 INSERT INTO detalles_orden (orden_id, producto_id, cantidad, precio_unitario, talla_seleccionada)
                 VALUES (?, ?, ?, ?, ?)
@@ -199,7 +172,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion']) && $_POST['
                 ]);
             }
 
-            // 4. Vaciar el carrito después de guardar los detalles de la orden
             $stmt_vaciar_carrito = $pdo->prepare("DELETE FROM carrito WHERE usuario_id = ?");
             $stmt_vaciar_carrito->execute([$usuario_id]);
 
@@ -214,12 +186,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion']) && $_POST['
     } else {
         $_SESSION['mensaje'] = "<div class='error-message'>Por favor, selecciona un método de pago para realizar la compra.</div>";
     }
-    header('Location: metodo_pago.php'); // Redirigir a la misma página para mostrar el mensaje
+    header('Location: metodo_pago.php');
     exit();
 }
 
-
-// --- Obtener los métodos de pago del usuario para mostrar ---
 $metodos_pago = [];
 try {
     $stmt = $pdo->prepare("SELECT id, tipo_tarjeta, ultimos_cuatro_digitos, mes_expiracion, año_expiracion, predeterminado FROM metodos_pago WHERE usuario_id = ? ORDER BY predeterminado DESC, fecha_creacion DESC");
@@ -242,13 +212,13 @@ try {
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </head>
 <body>
-    <?php include 'header.php'; // Incluye el header ?>
+    <?php include 'header.php'; ?>
 
     <main class="container">
         <h1>Mis Métodos de Pago</h1>
 
         <section class="payment-methods-list card">
-            <?php echo $mensaje; // Mostrar mensajes ?>
+            <?php echo $mensaje; ?>
 
             <?php if (empty($metodos_pago)): ?>
                 <p>No tienes ningún método de pago guardado. Por favor, añade uno a continuación.</p>
@@ -260,11 +230,11 @@ try {
                         <?php foreach ($metodos_pago as $metodo): ?>
                             <div class="payment-method-item <?php echo $metodo['predeterminado'] ? 'default-method' : ''; ?>">
                                 <input type="radio" 
-                                        id="metodo_<?php echo htmlspecialchars($metodo['id']); ?>" 
-                                        name="metodo_pago_seleccionado" 
-                                        value="<?php echo htmlspecialchars($metodo['id']); ?>" 
-                                        <?php echo $metodo['predeterminado'] ? 'checked' : ''; ?>
-                                        required>
+                                            id="metodo_<?php echo htmlspecialchars($metodo['id']); ?>" 
+                                            name="metodo_pago_seleccionado" 
+                                            value="<?php echo htmlspecialchars($metodo['id']); ?>" 
+                                            <?php echo $metodo['predeterminado'] ? 'checked' : ''; ?>
+                                            required>
                                 <label for="metodo_<?php echo htmlspecialchars($metodo['id']); ?>">
                                     <h3><?php echo htmlspecialchars($metodo['tipo_tarjeta']); ?> </h3>
                                     <p>**** **** **** <?php echo htmlspecialchars($metodo['ultimos_cuatro_digitos']); ?></p>

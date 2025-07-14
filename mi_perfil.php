@@ -11,8 +11,8 @@ $usuario_id = $_SESSION['usuario_id'];
 $nombre_usuario = $_SESSION['nombre_usuario'];
 $email = '';
 $rol = $_SESSION['rol'] ?? 'usuario'; 
-$mensaje = $_SESSION['mensaje_perfil'] ?? ''; // Recuperar el mensaje de la sesión
-unset($_SESSION['mensaje_perfil']); // Limpiar el mensaje después de mostrarlo
+$mensaje = $_SESSION['mensaje_perfil'] ?? '';
+unset($_SESSION['mensaje_perfil']); 
 
 
 try {

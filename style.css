@@ -58,8 +58,8 @@ header .container {
     justify-content: space-between;
     align-items: center;
     flex-wrap: wrap;
-    padding: 10px 20px; /* Espaciado interno superior/inferior y lateral */
-    gap: 5px; /* Espacio entre el logo, el menú y el área de búsqueda/filtros */
+    padding: 10px 20px; 
+    gap: 5px;
 }
 .logo {
     display: flex;
@@ -68,8 +68,8 @@ header .container {
 }
 
 .logo .site-logo {
-    width: 90px; /* Ancho fijo para el logo en píxeles */
-    height: auto; /* Mantiene la proporción de la imagen */
+    width: 90px; 
+    height: auto; 
     max-height: 80px; /* Altura máxima para asegurar que no sea demasiado grande */
     vertical-align: middle;
 }

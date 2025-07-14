@@ -1,21 +1,20 @@
 <?php
 session_start();
-require_once 'db_connection.php'; // Asegúrate de que esta ruta sea correcta
+require_once 'db_connection.php'; 
 
 if (!isset($_SESSION['usuario_id'])) {
-    // Redirigir al usuario si no está logueado y añadir un mensaje
     $_SESSION['mensaje'] = "<div class='error-message'>Debes iniciar sesión para ver tus facturas.</div>";
     header('Location: login.php');
     exit();
 }
 
 $usuario_id = $_SESSION['usuario_id'];
-$ordenes = []; // Usaremos 'ordenes' en lugar de 'facturas' para ser consistentes
-$mensaje_ordenes = ''; // Mensaje para errores o si no hay órdenes
+$ordenes = []; 
+$mensaje_ordenes = ''; 
 
 try {
-    // Obtener todas las órdenes (facturas) del usuario
-    // LEFT JOIN para incluir información del método de pago si existe
+    
+
     $stmt_ordenes = $pdo->prepare("
         SELECT 
             o.id AS orden_id, 
@@ -42,7 +41,7 @@ try {
 
 } catch (PDOException $e) {
     $mensaje_ordenes = "<p class='error-message'>Error al cargar el historial de órdenes: " . $e->getMessage() . "</p>";
-    error_log("Error al cargar historial de órdenes: " . $e->getMessage()); // Para depuración
+    error_log("Error al cargar historial de órdenes: " . $e->getMessage()); 
 }
 
 ?>
@@ -56,30 +55,29 @@ try {
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </head>
 <body>
-    <?php include 'header.php'; // Incluye el header de tu sitio ?>
+    <?php include 'header.php';  ?>
 
     <main class="container">
         <h1>Mi Historial de Órdenes (Facturas)</h1>
 
         <section class="order-history card">
-            <?php echo $mensaje_ordenes; // Muestra mensajes de error o información ?>
+            <?php echo $mensaje_ordenes;  ?>
 
-            <?php if (!empty($ordenes)): // Si hay órdenes, las mostramos ?>
+            <?php if (!empty($ordenes)):  ?>
                 <?php foreach ($ordenes as $orden): ?>
                     <div class="order-item">
                         <h3>Factura #<?php echo htmlspecialchars($orden['orden_id']); ?></h3>
                         <p><strong>Fecha:</strong> <?php echo htmlspecialchars(date('d/m/Y H:i', strtotime($orden['fecha_orden']))); ?></p>
                         <p><strong>Total:</strong> $<?php echo number_format($orden['total_orden'], 2); ?></p>
                         <p><strong>Estado:</strong> <span class="order-status <?php echo strtolower(str_replace(' ', '-', $orden['estado_orden'])); ?>"><?php echo htmlspecialchars($orden['estado_orden']); ?></span></p>
-                        <?php if ($orden['tipo_tarjeta']): // Muestra el método de pago si está disponible ?>
+                        <?php if ($orden['tipo_tarjeta']): ?>
                             <p><strong>Pagado con:</strong> <?php echo htmlspecialchars($orden['tipo_tarjeta']); ?> (**** <?php echo htmlspecialchars($orden['ultimos_cuatro_digitos']); ?>)</p>
                         <?php endif; ?>
 
                         <h4>Detalles de los Productos:</h4>
                         <ul class="order-details-list">
                             <?php
-                            // Consulta para obtener los detalles de los productos para la orden actual
-                            // Se une con la tabla 'zapatos' para obtener el nombre y la imagen del producto
+                            
                             $stmt_detalles = $pdo->prepare("
                                 SELECT 
                                     od.cantidad, 

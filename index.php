@@ -3,55 +3,53 @@ ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
 
-session_start(); // Inicia la sesión al principio del archivo
-require_once 'db_connection.php'; // Asegúrate de que esta ruta sea correcta para tu conexión a la base de datos
+session_start(); 
+require_once 'db_connection.php'; 
 
 $zapatos = [];
-// Consulta SQL base con una cláusula WHERE 1=1 para facilitar la adición de condiciones
-$sql = "SELECT id, nombre, marca, precio, imagen, categoria, talla, descripcion FROM zapatos WHERE 1=1"; 
-$params = []; // Array para los parámetros de la consulta preparada, crucial para la seguridad (PDO prepared statements)
 
-// --- Procesar la búsqueda por texto (search_query) ---
+$sql = "SELECT id, nombre, marca, precio, imagen, categoria, talla, descripcion FROM zapatos WHERE 1=1"; 
+$params = []; 
+
+
 if (isset($_GET['search_query']) && !empty(trim($_GET['search_query']))) {
-    $search_query = '%' . trim($_GET['search_query']) . '%'; // Para búsquedas parciales (LIKE %texto%)
-    // Añadir condiciones para buscar el término en nombre, marca o descripción
+    $search_query = '%' . trim($_GET['search_query']) . '%'; 
+
     $sql .= " AND (nombre LIKE ? OR marca LIKE ? OR descripcion LIKE ?)";
     $params[] = $search_query;
     $params[] = $search_query;
     $params[] = $search_query;
 }
 
-// --- Procesar el filtro de categoría ---
+
 if (isset($_GET['category']) && !empty($_GET['category'])) {
     $category = $_GET['category'];
-    $sql .= " AND categoria = ?"; // Filtrar por categoría exacta
+    $sql .= " AND categoria = ?"; 
     $params[] = $category;
 }
 
-// --- Procesar el filtro de talla ---
+
 if (isset($_GET['size']) && !empty($_GET['size'])) {
     $size = $_GET['size'];
-    // Usamos LIKE para buscar la talla exacta dentro del campo 'talla'.
-    // Esto es útil si tu campo 'talla' en la DB contiene múltiples valores separados por coma (ej. "38,39,40")
-    // o si contiene un solo valor (ej. "38").
+   
     $sql .= " AND talla LIKE ?"; 
-    $params[] = '%' . $size . '%'; // Buscar la talla como parte de la cadena
+    $params[] = '%' . $size . '%'; 
 }
 
-// Añadir ordenamiento al final de la consulta (los más nuevos primero)
+
 $sql .= " ORDER BY id DESC"; 
 
 try {
-    // Preparar la consulta SQL con los parámetros dinámicos
+    
     $stmt = $pdo->prepare($sql);
-    // Ejecutar la consulta pasando los parámetros de forma segura (prevención de inyección SQL)
+    
     $stmt->execute($params);
-    // Obtener todos los resultados como un array de objetos o arrays asociativos
+    
     $zapatos = $stmt->fetchAll();
 } catch (\PDOException $e) {
-    // Mostrar un mensaje de error amigable al usuario si la base de datos falla
+    
     echo "<p style='color: red;'>No se pudieron cargar los productos: " . $e->getMessage() . "</p>";
-    // Registrar el error detallado en los logs del servidor para depuración
+    
     error_log("Error al cargar productos con filtros en index.php: " . $e->getMessage()); 
 }
 ?>
@@ -66,7 +64,7 @@ try {
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </head>
 <body>
-    <?php include 'header.php'; // Incluye el header con la barra de búsqueda y filtros funcionales ?>
+    <?php include 'header.php';  ?>
 
     <main class="container">
         <h2>Nuestra Colección</h2>
@@ -97,12 +95,12 @@ try {
                                     <select id="talla_<?php echo $zapato['id']; ?>" name="talla" class="size-select" required>
                                         <option value="">Selecciona una talla</option>
                                         <?php
-                                        // Generar opciones de talla dinámicamente si el campo 'talla' contiene múltiples tallas separadas por comas
+                                        
                                         if (!empty($zapato['talla'])) {
-                                            $tallas_disponibles_zapato = explode(',', $zapato['talla']); // Divide la cadena "36,37,38" en un array
+                                            $tallas_disponibles_zapato = explode(',', $zapato['talla']); 
                                             foreach ($tallas_disponibles_zapato as $talla_individual) {
-                                                $talla_individual = trim($talla_individual); // Elimina espacios en blanco
-                                                if (!empty($talla_individual)) { // Asegura que no se añadan opciones vacías
+                                                $talla_individual = trim($talla_individual); 
+                                                if (!empty($talla_individual)) {
                                                     echo '<option value="' . htmlspecialchars($talla_individual) . '">' . htmlspecialchars($talla_individual) . '</option>';
                                                 }
                                             }
