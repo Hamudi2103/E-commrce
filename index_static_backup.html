@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Your Way's Shoes - Nuestra Colección</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body>
+    <header>
+        <div class="container">
+            <div class="logo">
+                <a href="index.html"><img src="Your Ways Shoes.png" alt="Your Way's Shoes Logo" class="site-logo"></a>
+            </div>
+            <nav>
+                <input type="checkbox" id="menu-toggle">
+                <label for="menu-toggle" class="menu-icon"><i class="fas fa-bars"></i></label>
+                <ul class="nav-links">
+                    <li><a href="index.html" class="active"><i class="fas fa-shoe-prints"></i> Zapatos</a></li>
+                    <li><a href="carrito.php"><i class="fas fa-shopping-cart"></i> Carrito</a></li>
+                    <li><a href="perfil.html"><i class="fas fa-user"></i> Mi Perfil</a></li>
+                </ul>
+            </nav>
+            <div class="search-filter-area">
+                <div class="search-bar">
+                    <input type="text" placeholder="Buscar zapatos...">
+                    <button type="submit"><i class="fas fa-search"></i></button>
+                </div>
+                <div class="filters">
+                    <select>
+                        <option value="">Categoría</option>
+                        <option value="deportivo">Deportivo</option>
+                        <option value="formal">Formal</option>
+                        <option value="casual">Casual</option>
+                    </select>
+                    <select>
+                        <option value="">Talla</option>
+                        <option value="38">38</option>
+                        <option value="39">39</option>
+                        <option value="40">40</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="container">
+        <section id="productos" class="product-listing">
+            <h2>Nuestra Colección</h2>
+            <div class="product-grid">
+                <div class="product-card">
+                    <img src="https://via.placeholder.com/300x200/2a2a2a/fed200?text=Zapato+Urbano" alt="Zapato Urbano">
+                    <h3>Zapato Deportivo Urbano</h3>
+                    <p class="brand">Marca Deportiva</p>
+                    <p class="price">$79.99</p>
+                    <button class="add-to-cart-btn"><i class="fas fa-cart-plus"></i> Añadir al Carrito</button>
+                </div>
+                <div class="product-card">
+                    <img src="https://via.placeholder.com/300x200/2a2a2a/fed200?text=Zapato+Formal" alt="Zapato Formal">
+                    <h3>Mocasín de Cuero</h3>
+                    <p class="brand">Marca Elegante</p>
+                    <p class="price">$120.00</p>
+                    <button class="add-to-cart-btn"><i class="fas fa-cart-plus"></i> Añadir al Carrito</button>
+                </div>
+                <div class="product-card">
+                    <img src="https://via.placeholder.com/300x200/2a2a2a/fed200?text=Bota+Casual" alt="Bota Casual">
+                    <h3>Bota Casual de Gamuza</h3>
+                    <p class="brand">Marca Confort</p>
+                    <p class="price">$95.50</p>
+                    <button class="add-to-cart-btn"><i class="fas fa-cart-plus"></i> Añadir al Carrito</button>
+                </div>
+                <div class="product-card">
+                    <img src="https://via.placeholder.com/300x200/2a2a2a/fed200?text=Tenis+Running" alt="Tenis Running">
+                    <h3>Tenis para Correr Avanzado</h3>
+                    <p class="brand">Marca Velocidad</p>
+                    <p class="price">$110.00</p>
+                    <button class="add-to-cart-btn"><i class="fas fa-cart-plus"></i> Añadir al Carrito</button>
+                </div>
+                            </div>
+        </section>
+    </main>
+
+    
+</body>
+</html>
